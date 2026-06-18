@@ -3,154 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>和心 V9 - 低学年モード切替・作品公開・全画面プレビュー付き 完全IDE</title>
+    <title>和心 V9 - p5.js風 文法＆辞書検索・Firebase作品共有ギャラリー付き 完全IDE</title>
     <style>
+        /* STREAMING_CHUNK: スタイルの定義 */
         :root {
-            --bg-dark: #1e1e1e;
-            --bg-panel: #252526;
-            --bg-sidebar: #2d2d2d;
-            --text-main: #cccccc;
-            --text-light: #ffffff;
-            --accent: #007acc;
-            --border: #3c3c3c;
-            --highlight: #264f78;
+            --bg-dark: #0d1117;
+            --bg-panel: #161b22;
+            --bg-sidebar: #21262d;
+            --text-main: #c9d1d9;
+            --text-light: #f0f6fc;
+            --accent: #1f6feb;
+            --border: #30363d;
+            --gold: #d4af37;
+            --gold-light: #f9e596;
+            --gold-dark: #aa7c11;
+            --highlight: #388bfd;
+            --success: #238636;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Meiryo, sans-serif; }
         body { display: flex; flex-direction: column; height: 100vh; background-color: var(--bg-dark); color: var(--text-main); overflow: hidden; }
         
-        header { height: 45px; background-color: #333; display: flex; align-items: center; padding: 0 20px; font-weight: bold; color: #fff; border-bottom: 1px solid #000; justify-content: space-between; }
+        header { height: 50px; background-color: #010409; display: flex; align-items: center; padding: 0 20px; font-weight: bold; color: #fff; border-bottom: 1px solid var(--border); justify-content: space-between; z-index: 100; }
         
-        #workspace { display: flex; flex: 1; height: calc(100vh - 45px); }
+        #workspace { display: flex; flex: 1; height: calc(100vh - 50px); }
         
         /* === 左側：辞書＆文法検索サイドバー === */
-        #sidebar { width: 340px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: 0.3s; }
-        .sidebar-header { padding: 15px; font-size: 14px; font-weight: bold; background: var(--bg-panel); border-bottom: 1px solid var(--border); color: #9cdcfe; }
-        .search-box-container { padding: 15px; border-bottom: 1px solid var(--border); background: #252526; }
-        #search-input { width: 100%; padding: 10px 12px; background: #3c3c3c; border: 1px solid #555; color: #fff; border-radius: 4px; outline: none; font-size: 14px; }
+        #sidebar { width: 340px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: transform 0.3s ease, width 0.3s ease; }
+        .sidebar-header { padding: 15px; font-size: 14px; font-weight: bold; background: var(--bg-panel); border-bottom: 1px solid var(--border); color: var(--gold-light); display: flex; justify-content: space-between; align-items: center; }
+        .search-box-container { padding: 15px; border-bottom: 1px solid var(--border); background: var(--bg-panel); }
+        #search-input { width: 100%; padding: 10px 12px; background: #0d1117; border: 1px solid var(--border); color: #fff; border-radius: 6px; outline: none; font-size: 14px; transition: border-color 0.2s; }
         #search-input:focus { border-color: var(--accent); }
         #search-results { flex: 1; overflow-y: auto; padding: 15px; font-size: 13px; line-height: 1.5; }
         
-        .result-item { background: #1e1e1e; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; }
-        .result-item:hover { background-color: #333; transform: translateY(-2px); }
-        .result-item.syntax-type { border-left-color: #d7ba7d; }
+        .result-item { background: var(--bg-dark); padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; transition: 0.2s; }
+        .result-item:hover { background-color: #30363d; transform: translateY(-2px); }
+        .result-item.syntax-type { border-left-color: var(--gold); }
         
-        .result-tag { color: #569cd6; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .syntax-tag { color: #d7ba7d; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        .result-primary { color: #4fc1ff; font-weight: bold; font-size: 15px; }
-        .result-synonyms { color: #9cdcfe; margin-top: 6px; font-size: 12px; word-break: break-all; }
-        .result-example { color: #ce9178; font-family: 'Consolas', monospace; margin-top: 8px; background: #2d2d2d; padding: 5px; border-radius: 3px; font-size: 12px; }
-        .result-desc { color: #aaa; font-size: 12px; margin-top: 6px; }
+        .result-tag { color: #58a6ff; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .syntax-tag { color: var(--gold-light); font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .result-primary { color: #f0f6fc; font-weight: bold; font-size: 15px; }
+        .result-synonyms { color: #8b949e; margin-top: 6px; font-size: 12px; word-break: break-all; }
+        .result-example { color: #ffa657; font-family: 'Consolas', monospace; margin-top: 8px; background: #161b22; padding: 6px; border-radius: 4px; font-size: 12px; border: 1px solid var(--border); }
+        .result-desc { color: #8b949e; font-size: 12px; margin-top: 6px; }
 
-        .category-header { background-color: #333; color: #d7ba7d; padding: 10px 12px; margin-top: 5px; margin-bottom: 5px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-        .category-header:hover { background-color: #444; }
+        .category-header { background-color: var(--bg-panel); color: var(--gold-light); padding: 12px; margin-top: 5px; margin-bottom: 5px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; border: 1px solid var(--border); }
+        .category-header:hover { background-color: #21262d; }
 
-        /* === 右側：エディタ＆プレビュー === */
+        /* === 右側：エディタ＆プレビュー (左右分割) === */
         #main-area { display: flex; flex: 1; }
         
         #editor-pane { width: 50%; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
-        .pane-title { background: var(--bg-panel); padding: 10px 15px; font-size: 13px; color: #d7ba7d; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        #washin-editor { flex: 1; background-color: var(--bg-dark); color: #d4d4d4; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; border: none; outline: none; resize: none; line-height: 1.6; }
+        .pane-title { background: var(--bg-panel); padding: 10px 15px; font-size: 13px; color: var(--gold-light); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        #washin-editor { flex: 1; background-color: var(--bg-dark); color: #e6edf3; padding: 15px; font-size: 16px; font-family: 'Consolas', 'Courier New', monospace; border: none; outline: none; resize: none; line-height: 1.6; }
         
         #preview-pane { width: 50%; display: flex; flex-direction: column; background: #fff; }
         #preview-frame { flex: 1; width: 100%; border: none; background-color: #fff; }
 
-        .status-dot { height: 8px; width: 8px; background-color: #89d185; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .status-dot.typing { background-color: #cca700; }
+        .status-dot { height: 8px; width: 8px; background-color: #3fb950; border-radius: 50%; display: inline-block; margin-right: 5px; box-shadow: 0 0 5px #3fb950; }
+        .status-dot.typing { background-color: #d29922; box-shadow: 0 0 5px #d29922; }
 
         /* === UI用追加スタイル === */
-        .action-btn { background-color: #2d2d2d; color: #ccc; border: 1px solid #555; padding: 6px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .action-btn:hover { background-color: #444; color: #fff; }
+        .action-btn { background-color: #21262d; color: #c9d1d9; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .action-btn:hover { background-color: #30363d; color: #fff; border-color: #8b949e; }
         
-        /* === モーダル === */
-        #main-modal, #publish-modal, #search-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; overflow-y: auto; padding: 40px 20px; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--bg-panel); max-width: 1000px; margin: 0 auto; border-radius: 8px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        /* === モーダル・全画面検索システム === */
+        #main-modal, #publish-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,15,29,0.9); z-index: 2000; overflow-y: auto; padding: 40px 20px; backdrop-filter: blur(8px); }
+        .modal-content { background: var(--bg-panel); max-width: 800px; margin: 0 auto; border-radius: 12px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); border: 1px solid var(--border); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        .grammar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; }
-        .grammar-card { background: var(--bg-dark); padding: 15px; border-radius: 6px; border-left: 4px solid #d7ba7d; }
+        .grammar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .grammar-card { background: var(--bg-dark); padding: 15px; border-radius: 8px; border-left: 4px solid var(--gold); border: 1px solid var(--border); border-left-width: 4px; }
         
-        .input-field { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 4px; border: 1px solid var(--border); background: #1e1e1e; color: #fff; font-size: 14px; }
+        .input-field { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: #fff; font-size: 14px; transition: border-color 0.2s; }
         .input-field:focus { border-color: var(--accent); outline: none; }
-        .preview-mini-frame { width: 100%; height: 250px; border: 1px solid #555; background: #fff; border-radius: 4px; margin: 15px 0; }
-        .loader-text { color: #10b981; font-weight: bold; font-size: 16px; text-align: center; margin: 20px 0; display: none; }
-        .success-box { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; padding: 15px; border-radius: 6px; margin-top: 15px; text-align: center; }
-        .error-box { background: rgba(248, 113, 113, 0.2); border: 1px solid #f87171; padding: 15px; border-radius: 6px; margin-top: 15px; color: #f87171; text-align: center; display: none; }
+        
+        /* === 究極の「作品をさがす」全画面ショーケース === */
+        #search-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-dark); z-index: 3000; overflow-y: auto; padding: 30px; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .gallery-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; height: 100%; }
+        .gallery-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+        .gallery-search-bar { display: flex; gap: 15px; margin-bottom: 30px; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; }
+        
+        .gallery-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; flex: 1; align-items: start; }
+        .gallery-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; max-height: 520px; overflow-y: auto; padding-right: 10px; }
+        
+        /* 作品カードデザイン */
+        .project-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; justify-content: space-between; position: relative; height: 160px; text-align: left; }
+        .project-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+        .project-card.active { border-color: var(--accent); background: #21262d; box-shadow: inset 0 0 10px rgba(31,111,235,0.2); }
+        .project-card h4 { font-size: 17px; color: #fff; margin-bottom: 6px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .project-card p { font-size: 13px; color: #8b949e; line-height: 1.5; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-bottom:0; }
+        .project-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; font-size: 11px; color: #8b949e; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
+        .project-id-badge { background: #161b22; color: var(--gold-light); padding: 2px 8px; border-radius: 12px; font-weight: bold; font-family: monospace; border: 1px solid var(--border); }
+
+        /* ミニプレビューペイン */
+        .preview-pane-container { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 12px; padding: 25px; display: flex; flex-direction: column; position: sticky; top: 0; text-align: left; }
+        .preview-mini-frame { width: 100%; height: 320px; border: 1px solid var(--border); background: #fff; border-radius: 8px; overflow: hidden; margin: 15px 0; }
+
+        /* ロード・ローディング演出 */
+        .loader-text { color: #58a6ff; font-weight: bold; font-size: 18px; text-align: center; margin: 30px 0; display: none; }
+        .loader-dots { display: inline-block; animation: blink 1.4s infinite both; }
+        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
+        
+        .success-box { background: rgba(35, 134, 54, 0.15); border: 1px solid var(--success); padding: 20px; border-radius: 8px; margin-top: 15px; text-align: center; }
+        .error-box { background: rgba(248, 113, 113, 0.15); border: 1px solid #f87171; padding: 20px; border-radius: 8px; margin-top: 15px; color: #f87171; text-align: center; display: none; font-weight: bold; }
+        
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
     <header>
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
             <button id="toggle-sidebar-btn" class="action-btn">☰ 辞書切替</button>
             <button id="show-grammar-btn" class="action-btn">📖 文法一覧をみる</button>
-            <button id="publish-btn" class="action-btn" style="background: #10b981; color: white; border: none;">🚀 作品を公開する</button>
+            <button id="publish-btn" class="action-btn" style="background: var(--success); color: white; border: none;">🚀 作品を公開する</button>
             <button id="search-btn" class="action-btn" style="background: #8b5cf6; color: white; border: none;">🔍 作品を探す</button>
             <button id="kids-mode-btn" class="action-btn" style="background: #0ea5e9; color: white; border: none;">👶 低学年モードにする</button>
-            <div id="header-title">和心 V9 - 文法＆辞書検索付き 完全IDE</div>
+            <div id="header-title" style="margin-left:15px; font-size:16px;">和心 V9 - 文法＆辞書検索付き 完全IDE</div>
         </div>
-        <div id="header-desc" style="font-size: 13px; color: #bbb;">左のパネルで「箱」「文字色」や「波括弧」などの文法を検索できます</div>
+        <div id="header-desc" style="font-size: 12px; color: #8b949e;">左のパネルで「箱」「文字色」や「波括弧」などの文法を検索できます</div>
     </header>
 
-    <!-- モーダル群 -->
+    <!-- モーダル：文法・詳細解説 -->
     <div id="main-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-main-title" style="color: #d7ba7d; margin: 0;">📖 和心 解説</h2>
+                <h2 id="modal-main-title" style="color: var(--gold-light); margin: 0;">📖 和心 解説</h2>
                 <button id="close-modal-btn" class="action-btn" style="background: #f87171; color: white; border: none;">閉じる ✖</button>
             </div>
             <div id="modal-list-content"></div>
         </div>
     </div>
 
-    <!-- Firebase用 公開モーダル -->
+    <!-- モーダル：作品の公開 -->
     <div id="publish-modal">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
-                <h2 style="color: #10b981; margin: 0;">🚀 作品を公開する（セーブ）</h2>
+                <h2 id="pub-main-title" style="color: #58a6ff; margin: 0;">🚀 作品を公開する（セーブ）</h2>
                 <button id="close-publish-btn" class="action-btn" style="background: #f87171; color: white; border: none;">閉じる ✖</button>
             </div>
             <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 5px; color: #ccc;">作品のなまえ（ひっす）</label>
+                <label id="lbl-pub-title" style="display: block; margin-bottom: 8px; color: #c9d1d9;">作品のなまえ（ひっす）</label>
                 <input type="text" id="publish-title" class="input-field" placeholder="例：おもしろいゲーム">
-                <label style="display: block; margin-bottom: 5px; color: #ccc;">作品のせつめい</label>
-                <textarea id="publish-desc" class="input-field" style="height: 80px;" placeholder="例：ボタンをおすと色が変わるよ！"></textarea>
                 
-                <div id="publish-loader" class="loader-text">✨ 通信しているよ... まっててね ✨</div>
+                <label id="lbl-pub-desc" style="display: block; margin-bottom: 8px; color: #c9d1d9;">作品のせつめい</label>
+                <textarea id="publish-desc" class="input-field" style="height: 100px; resize:none;" placeholder="例：ボタンをおすと色が変わるよ！"></textarea>
+                
+                <div id="publish-loader" class="loader-text">✨ 通信しているよ... まっててね <span class="loader-dots">...</span></div>
                 <div id="publish-error" class="error-box"></div>
+                
                 <div id="publish-success" class="success-box" style="display: none;">
-                    <h3 style="color: #059669; margin-top:0;">🎉 公開できたよ！</h3>
-                    <p>きみの作品の「固有ID」はこれだよ。このIDをお友だちに教えてあげてね！</p>
-                    <input type="text" id="publish-id-result" class="input-field" style="font-size: 18px; font-weight: bold; text-align: center; background: #fff; color: #000;" readonly>
-                    <button id="copy-id-btn" class="action-btn" style="background: #0ea5e9; color: white; border: none; font-size: 16px; padding: 10px 20px;">コピーする</button>
+                    <h3 style="color: #3fb950; margin-top:0; font-size:20px;">🎉 公開できたよ！</h3>
+                    <p id="lbl-pub-success-desc" style="margin-bottom:15px; font-size:14px; color:#8b949e;">きみの作品の「固有ID」はこれだよ。このIDをお友だちに教えてあげてね！</p>
+                    <input type="text" id="publish-id-result" class="input-field" style="font-size: 20px; font-weight: bold; text-align: center; background: #21262d; color: var(--gold-light); border-color:var(--gold);" readonly>
+                    <button id="copy-id-btn" class="action-btn" style="background: #0ea5e9; color: white; border: none; font-size: 15px; padding: 10px 24px; width:100%; justify-content:center;">コピーする</button>
                 </div>
-                <button id="execute-publish-btn" class="action-btn" style="background: #10b981; color: white; border: none; width: 100%; padding: 15px; font-size: 18px; margin-top: 10px;">🌟 世界に公開する！</button>
+                <button id="execute-publish-btn" class="action-btn" style="background: var(--success); color: white; border: none; width: 100%; padding: 15px; font-size: 18px; margin-top: 10px; justify-content:center;">🌟 世界に公開する！</button>
             </div>
         </div>
     </div>
 
-    <!-- Firebase用 探すモーダル -->
+    <!-- === 究極の「作品をさがす」全画面ショーケース・ギャラリー === -->
     <div id="search-modal">
-        <div class="modal-content" style="max-width: 800px;">
-            <div class="modal-header">
-                <h2 style="color: #8b5cf6; margin: 0;">🔍 作品を探す（ロード）</h2>
-                <button id="close-search-btn" class="action-btn" style="background: #f87171; color: white; border: none;">閉じる ✖</button>
+        <div class="gallery-container">
+            <div class="gallery-header">
+                <div style="display:flex; align-items:center; gap:15px; text-align: left;">
+                    <span style="font-size:32px;">🌐</span>
+                    <div>
+                        <h2 id="gallery-main-title" style="color: #fff; font-size: 28px; font-weight:900; margin:0;">みんなの作品ひろば</h2>
+                        <p id="gallery-sub-title" style="color: #8b949e; font-size:14px; margin:0;">世界中のみんながつくった和心プログラムをロードしてあそぼう！</p>
+                    </div>
+                </div>
+                <button id="close-search-btn" class="action-btn" style="background: #f87171; color: white; border: none; padding: 10px 20px; font-size:14px;">エディタにもどる ✖</button>
             </div>
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <input type="text" id="search-id-input" class="input-field" style="margin-bottom:0; flex:1; font-size:16px;" placeholder="作品の「固有ID」を入力してね">
-                <button id="execute-search-btn" class="action-btn" style="background: #8b5cf6; color: white; border: none; padding: 0 20px; font-size: 16px;">さがす！</button>
+            
+            <!-- 検索バー -->
+            <div class="gallery-search-bar">
+                <input type="text" id="search-id-input" class="input-field" style="margin-bottom:0; font-size:16px; border-color:var(--border);" placeholder="固有ID（6文字）、または作品の名前を入力してね...">
+                <button id="execute-search-btn" class="action-btn" style="background: #8b5cf6; color: white; border: none; padding: 0 30px; font-size: 16px;">さがす 🔍</button>
             </div>
-            <div id="search-loader" class="loader-text" style="color: #8b5cf6;">✨ 探しているよ... まっててね ✨</div>
+
+            <!-- 通信中ローダー -->
+            <div id="search-loader" class="loader-text">✨ データをあつめているよ... まっててね <span class="loader-dots">...</span></div>
             <div id="search-error" class="error-box"></div>
-            <div id="search-result-area" style="display: none; background: #1e1e1e; padding: 20px; border-radius: 8px; border: 1px solid #4c1d95;">
-                <h3 id="search-result-title" style="color: #c4b5fd; margin-top:0; font-size: 24px;"></h3>
-                <p id="search-result-desc" style="color: #ddd; font-size: 14px; line-height: 1.6;"></p>
-                <h4 style="color: #a78bfa; margin-bottom: 5px;">【ミニプレビュー】</h4>
-                <iframe id="search-preview-frame" class="preview-mini-frame" sandbox="allow-scripts allow-same-origin"></iframe>
-                <button id="load-code-btn" class="action-btn" style="background: #0ea5e9; color: white; border: none; width: 100%; padding: 15px; font-size: 18px; margin-top: 15px;">📥 このコードの中身を見る（エディタに読み込む）</button>
+
+            <!-- メインギャラリーレイアウト（左右分割） -->
+            <div id="search-result-area" class="gallery-layout">
+                <!-- 左側：公開作品カード一覧リスト -->
+                <div>
+                    <h3 id="gallery-list-label" style="color: var(--gold-light); font-size: 18px; margin-bottom: 15px;">公開されているすべての作品</h3>
+                    <div id="gallery-projects-list" class="gallery-list">
+                        <!-- カード群が動的に展開されます -->
+                    </div>
+                </div>
+
+                <!-- 右側：プレミアムプレビューペイン -->
+                <div class="preview-pane-container">
+                    <h3 id="search-result-title" style="color: #58a6ff; margin-top:0; font-size: 24px; font-weight:bold;"></h3>
+                    <p id="search-result-desc" style="color: #8b949e; font-size: 14px; line-height: 1.6; margin-top:10px;"></p>
+                    
+                    <div style="border-top:1px solid var(--border); margin-top:15px; padding-top:15px;">
+                        <h4 id="lbl-mini-preview" style="color: var(--gold-light); font-size:14px; font-weight:bold; margin-bottom: 5px;">🎮 ライブプレビュー (うごかせるよ)</h4>
+                        <iframe id="search-preview-frame" class="preview-mini-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+                    </div>
+                    
+                    <button id="load-code-btn" class="action-btn" style="background: #0ea5e9; color: white; border: none; width: 100%; padding: 15px; font-size: 18px; margin-top: 10px; justify-content:center; box-shadow:0 4px 15px rgba(14,165,233,0.3);">📥 この作品をエディタにひらく</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- ワークスペース -->
     <div id="workspace">
+        <!-- サイドバー -->
         <div id="sidebar">
             <div id="sidebar-title" class="sidebar-header">🔍 和心 辞書・文法検索</div>
             <div class="search-box-container">
@@ -159,6 +223,7 @@
             <div id="search-results"></div>
         </div>
 
+        <!-- メイン領域 -->
         <div id="main-area">
             <div id="editor-pane">
                 <div class="pane-title">
@@ -197,10 +262,18 @@
         // Firebaseの初期化
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
+        
+        // 通常のスクリプトから呼び出せるようにグローバル変数（window）に登録
+        window.__firebase_db = database;
+        window.__firebase_ref = ref;
+        window.__firebase_set = set;
+        window.__firebase_get = get;
+        window.__firebase_child = child;
+    </script>
 
-        // ==========================================
-        // 状態管理：低学年モード
-        // ==========================================
+    <!-- ===== メインエディタロジックJS ===== -->
+    <script>
+        /* STREAMING_CHUNK: メインプログラム処理 */
         let isKidsMode = false;
 
         // デフォルトコードの定義
@@ -317,7 +390,7 @@
                 { tag: "p", primary: "文章", kidsPrimary: "おはなし", synonyms: ["段落", "テキスト", "本文", "パラグラフ", "説明", "詳細", "メッセージ", "内容", "解説", "リード", "文字列", "記事", "ノート", "原稿", "文章枠", "ぶんしょうをかくところ", "ふつうのもじ"], hidden: ["p", "bunshou", "bun"], desc: "まとまった普通のテキストを書くための段落です。", kidsDesc: "まとまった普通のお話やテキストを書くための段落です。" },
                 { tag: "a", primary: "リンク", kidsPrimary: "ワープする", synonyms: ["飛び先", "アンカー", "リンク文字", "クリック先", "URL", "導線", "別ページ", "参照先", "宛先", "遷移先", "ジャンプ", "ハイパーリンク", "外部参照", "リンクタグ", "リンク先", "べつのページへいく", "とぶところ"], hidden: ["a", "rinku", "link"], desc: "クリックすると別の場所に移動するリンクを作ります。", kidsDesc: "クリックすると別の場所にワープするリンクを作ります。" },
                 { tag: "img", primary: "画像", kidsPrimary: "えをだす", synonyms: ["写真", "絵", "イラスト", "イメージ", "図", "図解", "サムネイル", "アイコン", "フォト", "視覚", "ピクチャ", "グラフィック", "挿絵", "カット", "画像枠", "がぞうをだす", "しゃしんをはる"], hidden: ["img", "gazou", "pic"], desc: "画面に画像やイラストを表示します。", kidsDesc: "画面に絵や写真を貼り付けて表示します。" },
-                { tag: "ul", primary: "リスト", kidsPrimary: "てんてんのリスト", synonyms: ["箇条書き", "リスト枠", "一覧", "項目群", "目録", "メニュー枠", "列挙", "シリーズ", "並び", "セット", "リストコンテナ", "非順序リスト", "箇条枠", "まとめリスト", "アイテムグループ", "かじょうがき", "てんてんでならべる"], hidden: ["ul", "risuto", "list"], desc: "先頭に・（黒丸）がつく箇条書きのリスト全体です。", kidsDesc: "先頭に・（黒丸）がつく箇条書きのリスト全体です。" },
+                { tag: "ul", primary: "リスト", kidsPrimary: "てんてんのリスト", synonyms: ["箇条書き", "リスト枠", "一覧", "項目群", "目録", "メニュー枠", "列挙", "シリーズ", "並び", "セット", "リストコンテナ", "非順序リスト", "箇条枠", "まとめリスト", "アイテムグループ", "てんてんでならべる", "かじょうがき"], hidden: ["ul", "risuto", "list"], desc: "先頭に・（黒丸）がつく箇条書きのリスト全体です。", kidsDesc: "先頭に・（黒丸）がつく箇条書きのリスト全体です。" },
                 { tag: "ol", primary: "番号リスト", kidsPrimary: "ばんごうのリスト", synonyms: ["番号付き", "順序リスト", "番号順", "手順リスト", "ステップ", "順番", "ナンバリング", "序列", "番号付きリスト", "順番リスト", "手引き", "番号枠", "順位リスト", "序列リスト", "段取り", "すうじでならべる"], hidden: ["ol", "bangou", "num"], desc: "1, 2, 3...と番号がつくリスト全体です。", kidsDesc: "1, 2, 3...と順番に数字がつくリスト全体です。" },
                 { tag: "li", primary: "項目", kidsPrimary: "リストのなかみ", synonyms: ["要素", "アイテム", "一条", "リスト単体", "一行", "メンバ", "箇条", "個別", "ノードアイテム", "構成員", "リストセル", "単位", "子項目", "パーツアイテム", "点", "ひとつのおはなし", "ならぶもの"], hidden: ["li", "koumoku", "item"], desc: "リストの中に入る1つ1つの項目です。", kidsDesc: "リストの中に入る1つ1つの項目（並ぶもの）です。" },
                 { tag: "table", primary: "表", kidsPrimary: "ひょう", synonyms: ["テーブル", "データ表", "マトリクス", "格子", "一覧表", "表枠", "表組", "データ枠", "グリッド表", "集計表", "表コンテナ", "データテーブル", "マス目表", "表ベース", "表全体", "マス目をつくる"], hidden: ["table", "hyou"], desc: "エクセルのような表を作成するための大枠です。", kidsDesc: "エクセルのような表を作成するための大枠です。" },
@@ -343,46 +416,57 @@
                 { tag: "border-radius", primary: "角丸", kidsPrimary: "かどをまるくする", synonyms: ["丸み", "コーナー丸め", "角の丸み", "角丸め", "ラウンド", "角の半径", "境界丸み", "丸角", "コーナーカーブ", "曲がり角", "円弧", "角取り", "カドマル", "エッジ丸め", "ボーダー角丸", "まるっこくする"], hidden: ["radius", "kadomaru", "br"], desc: "四角い箱の角を丸くします。", kidsDesc: "四角い箱の角を削って丸っこくします。" },
                 { tag: "display", primary: "表示形式", kidsPrimary: "みえかた", synonyms: ["ディスプレイ", "配置モード", "表示方法", "見え方", "表示スタイル", "展開方式", "表示モデル", "描画形式", "出力形式", "表示状態", "レイアウト形式", "ブロック形式", "画面表示", "表示定義", "可視モード", "ならべかた", "どうやってみせるか"], hidden: ["display", "hyouji", "d"], desc: "要素の並び方（flexなど）や表示/非表示を切り替えます。", kidsDesc: "要素の並べ方を変えたり、隠したりします。" },
                 { tag: "position", primary: "配置", kidsPrimary: "ばしょをきめる", synonyms: ["ポジション", "位置基準", "配置方法", "配置モード", "位置指定", "場所基準", "配置指定", "ポジショニング", "座標基準", "配置状態", "位置決め", "基準位置", "配置ルール", "場所設定", "位置関係", "おくところ"], hidden: ["position", "haichi", "pos"], desc: "要素を絶対配置（absolute）などで自由に動かします。", kidsDesc: "要素を絶対配置などで自由に好きな場所へ動かします。" },
-                { tag: "z-index", primary: "重なり", kidsPrimary: "かさなりじゅん", synonyms: ["Zインデックス", "深度", "重なり順", "奥行き", "階層", "レイヤー順", "Z順序", "重なり順位", "優先度", "前後関係", "重なりレベル", "レイヤーレベル", "層", "前面背面", "高さ順位", "うえにのせる", "どっちがうえか"], hidden: ["zindex", "kasanari", "z"], desc: "要素が重なった時、どれを前に出すかを決めます。", kidsDesc: "要素が重なった時、どれを一番前に出すかを決めます。" },
-                { tag: "box-shadow", primary: "影", kidsPrimary: "かげをつける", synonyms: ["シャドウ", "ドロップシャドウ", "ボックス影", "影の効果", "立体感", "影付け", "背後の影", "シェード", "影指定", "ボックスシャドウ", "浮き出し", "落とし影", "シャドー", "影エフェクト", "投影", "うかびあがらせる"], hidden: ["shadow", "kage"], desc: "要素に影をつけて立体的に見せます。", kidsDesc: "要素に影をつけて立体的に浮かび上がらせます。" },
+                { tag: "z-index", primary: "重なり", kidsPrimary: "かさなりじゅん", synonyms: ["Zインデックス", "深度", "重なり順", "奥行き", "階層", "レイヤー順", "Z順序", "重なり順位", "優先度", "前後関係", "重なりレベル", "レイヤーレベル", "層", "前面背面", "高さ順位", "かさなりじゅん", "うえにのせる", "どっちがうえか"], hidden: ["zindex", "kasanari", "z"], desc: "要素が重なった時、どれを前に出すかを決めます。", kidsDesc: "要素が重なった時、どれを一番前に出すかを決めます。" },
+                { tag: "box-shadow", primary: "影", kidsPrimary: "かげをつける", synonyms: ["シャドウ", "ドロップシャドウ", "ボックス影", "影の効果", "立体感", "影付け", "背後の影", "シェード", "影指定", "ボックスシャドウ", "浮き出し", "落とし影", "シャドー", "影エフェクト", "投影", "かげをつける", "うかびあがらせる"], hidden: ["shadow", "kage"], desc: "要素に影をつけて立体的に見せます。", kidsDesc: "要素に影をつけて立体的に浮かび上がらせます。" },
                 { tag: "opacity", primary: "透明度", kidsPrimary: "とうめいにする", synonyms: ["不透明度", "オパシティ", "透け感", "透明度合", "透明率", "透過", "透過度", "透過率", "不透明率", "アルファ値", "半透明", "透明指定", "かすれ", "透かし", "見え度", "すけさせる"], hidden: ["opacity", "toumeido", "op"], desc: "要素を半透明や完全に透明（0）にします。", kidsDesc: "要素を半透明にしたり、完全に透明にして消したりします。" },
-                { tag: "cursor", primary: "カーソル", kidsPrimary: "マウスのかたち", synonyms: ["マウスポインタ", "ポインタ", "マウス", "マウスマーク", "カーソル形状", "指先マーク", "マウスクリック", "ホバーマーク", "ポインター", "矢印形状", "カーソル指定", "操作マーク", "マウスカーソル", "指示器", "ポインタ形状", "やじるしのかたち"], hidden: ["cursor", "kaasoru"], desc: "要素に乗せた時のマウスの形（指マーク等）を変えます。", kidsDesc: "乗せた時のマウスの形（指マークなど）を変えます。" },
+                { tag: "cursor", primary: "カーソル", kidsPrimary: "マウスのかたち", synonyms: ["マウスポインタ", "ポインタ", "マウス", "マウスマーク", "カーソル形状", "指先マーク", "マウスクリック", "ホバーマーク", "ポインター", "矢印形状", "カーソル指定", "操作マーク", "マウスカーソル", "指示器", "ポインタ形状", "マウスのかたち", "やじるしのかたち"], hidden: ["cursor", "kaasoru"], desc: "要素に乗せた時のマウスの形（指マーク等）を変えます。", kidsDesc: "乗せた時のマウスの形（指マークなど）を変えます。" },
                 { tag: "transform", primary: "変形", kidsPrimary: "かたちをかえる", synonyms: ["トランスフォーム", "形状変化", "回転", "拡大縮小", "ゆがみ", "変形処理", "移動変形", "傾き", "スケール変化", "変形指定", "2D変形", "3D変形", "形態変化", "形状操作", "見た目変更", "まわす", "おおきくする"], hidden: ["transform", "henkei", "tf"], desc: "要素を回転させたり、大きくしたり変形させます。", kidsDesc: "要素をクルッと回転させたり、大きくしたり変形させます。" },
                 { tag: "transition", primary: "アニメ", kidsPrimary: "じわっとかえる", synonyms: ["変化", "トランジション", "アニメーション", "推移", "遷移", "滑らか変化", "時間変化", "移行", "徐々に変化", "モーション", "変化速度", "アニメ効果", "状態遷移", "動的変化", "変遷", "うごかす", "アニメーションにする"], hidden: ["transition", "anime", "tr"], desc: "色やサイズが変わる際に、フワッと滑らかに変化させます。", kidsDesc: "色やサイズが変わる際に、フワッと滑らかなアニメーションにします。" },
-                { tag: "line-height", primary: "行間", kidsPrimary: "ぎょうのすきま", synonyms: ["行の高さ", "ラインハイト", "行の余白", "文章間隔", "行間隔", "縦間隔", "行の空き", "行スペース", "行高", "行の間", "行幅", "行ゆとり", "テキスト行間", "行の開き", "行ピッチ", "もじとびのすきま"], hidden: ["lh", "gyoukan"], desc: "文章の行と行の間の隙間を調整します。", kidsDesc: "文章の行と行の間のすき間を調整します。" },
+                { tag: "line-height", primary: "行間", kidsPrimary: "ぎょうのすきま", synonyms: ["行の高さ", "ラインハイト", "行の余白", "文章間隔", "行間隔", "縦間隔", "行の空き", "行スペース", "行高", "行の間", "行幅", "行ゆとり", "テキスト行間", "行の開き", "行ピッチ", "ぎょうのすきま", "もじとびのすきま"], hidden: ["lh", "gyoukan"], desc: "文章の行と行の間の隙間を調整します。", kidsDesc: "文章の行と行の間のすき間を調整します。" },
                 { tag: "text-align", primary: "文字揃え", kidsPrimary: "もじをそろえる", synonyms: ["テキスト位置", "行揃え", "アライメント", "文字の配置", "テキスト揃え", "寄せる", "文章揃え", "配置揃え", "揃え位置", "テキスト配置", "文字位置", "文章配置", "左右揃え", "中央揃え", "文字寄せ", "まんなかにする", "みぎに寄せる"], hidden: ["ta", "mojisoroe"], desc: "文字を左、中央、右のどこに寄せるかを決めます。", kidsDesc: "文字を左、真ん中、右のどこに寄せるかを決めます。" }
             ],
             "js": [
                 { tag: "let", primary: "変数", kidsPrimary: "かわるかず", synonyms: ["変数宣言", "値入れ", "入れ物", "代入枠", "データ枠", "レット", "変数作成", "変数定義", "変化する値", "一時データ", "ローカル変数", "ブロックスコープ", "変数確保", "値の宣言", "箱の用意", "はこをつくる", "おぼえておくはこ"], hidden: ["let", "hensuu"], desc: "後から中身を変えられるデータを入れる箱を作ります。", kidsDesc: "後から中身を変えられるデータを入れる箱（変数）を作ります。" },
                 { tag: "const", primary: "定数", kidsPrimary: "かわらないかず", synonyms: ["定数宣言", "固定値", "不変値", "コンスト", "変わらない値", "定数作成", "定数定義", "固定データ", "固定変数", "定数確保", "ロック値", "固定の箱", "変更不可", "定数値", "一定値", "ずっとおなじはこ", "ぜったいかわらない"], hidden: ["const", "teisuu"], desc: "後から中身を変えられない（固定の）箱を作ります。", kidsDesc: "後から中身を変えられない、固定の箱を作ります。" },
-                { tag: "console.log", primary: "ログ出力", kidsPrimary: "こっそりみる", synonyms: ["コンソール出力", "コンソール表示", "ログ表示", "確認出力", "開発出力", "テスト出力", "デバッグ表示", "出力確認", "プリント", "コンソール書き出し", "裏側表示", "ログ書き出し", "画面外出力", "状態出力", "ログを出す", "うらでかくにん", "コンソールにだす"], hidden: ["log", "konsoru"], desc: "開発用の画面（コンソール）に目印を出力します。", kidsDesc: "開発用の画面（コンソール）に、こっそり目印を出力します。" },
+                { tag: "console.log", primary: "ログ出力", kidsPrimary: "こっそりみる", synonyms: ["コンソール出力", "コンソール表示", "ログ表示", "確認出力", "開発出力", "テスト出力", "デバッグ表示", "出力確認", "プリント", "コンソール書き出し", "裏側表示", "ログ書き出し", "画面外出力", "状態出力", "ログを出す"], hidden: ["log", "konsoru"], desc: "開発用の画面（コンソール）に目印を出力します。", kidsDesc: "開発用の画面（コンソール）に、こっそり目印を出力します。" },
                 { tag: "alert", primary: "警告表示", kidsPrimary: "おしらせする", synonyms: ["警告ダイアログ", "アラート", "ポップアップ", "警告画面", "メッセージ表示", "警告出し", "通知表示", "画面通知", "ポップアップ表示", "アラート表示", "ユーザー警告", "通知ウィンドウ", "警告ウィンドウ", "お知らせ表示", "注意表示", "ぽっぷあっぷをだす", "がめんにだす"], hidden: ["alert", "keikoku"], desc: "画面の真ん中にポップアップのメッセージを出します。", kidsDesc: "画面の真ん中にポップアップのお知らせを出します。" },
                 { tag: "document.querySelector", primary: "要素取得", kidsPrimary: "さがしてくる", synonyms: ["タグ取得", "クエリーセレクター", "要素を探す", "HTML取得", "画面から取得", "要素引っ張る", "要素選択", "単一取得", "セレクタ検索", "要素の検索", "タグ検索", "DOM取得", "ノード取得", "該当取得", "要素選び", "みつけてくる"], hidden: ["qs", "youso"], desc: "HTMLの中から、条件に合う最初の部品を1つ探して取ってきます。", kidsDesc: "HTMLの中から、条件に合う最初の部品を探して取ってきます。" },
                 { tag: "document.querySelectorAll", primary: "全要素取得", kidsPrimary: "ぜんぶさがしてくる", synonyms: ["全タグ取得", "複数要素取得", "すべて取得", "まとめて取得", "要素リスト取得", "一括取得", "全検索", "要素一斉取得", "ノードリスト", "複数選択", "全部取得", "要素群取得", "集合取得", "タグ複数取得", "一斉検索", "まとめてみつける"], hidden: ["qsa", "zenyouso"], desc: "条件に合う部品をすべて探してリストにして取ってきます。", kidsDesc: "条件に合う部品をすべて探してリストにして取ってきます。" },
                 { tag: "document.getElementById", primary: "ＩＤ取得", kidsPrimary: "なまえでさがす", synonyms: ["IDで取得", "ID検索", "IDから探す", "固有ID取得", "ID指定取得", "要素ID取得", "識別子取得", "IDセレクタ", "IDマッチ", "ID要素", "該当ID", "ID引っ張る", "ID取り出し", "固有取得", "ID発見", "あいでぃーでみつける"], hidden: ["id", "idshutoku"], desc: "指定したID名を持つ部品を正確に取ってきます。", kidsDesc: "指定したID名を持つ部品を正確に探して取ってきます。" },
-                { tag: "document.createElement", primary: "要素作成", kidsPrimary: "あたらしくつくる", synonyms: ["タグ作成", "新規要素", "HTML生成", "要素を産む", "要素作り", "タグ生成", "ノード作成", "DOM生成", "部品作成", "エレメント作成", "要素ビルド", "新規タグ", "要素クリエイト", "タグ作り", "パーツ生成", "ゼロからつくる"], hidden: ["create", "sakusei"], desc: "JavaScriptの力で新しいHTMLの部品を0から作ります。", kidsDesc: "プログラムの力で新しいHTMLの部品を0から作ります。" },
+                { tag: "document.createElement", primary: "要素作成", kidsPrimary: "あたらしくつくる", synonyms: ["タグ作成", "新規要素", "HTML生成", "要素を産む", "要素作り", "タグ生成", "ノード作成", "DOM生成", "部品作成", "エレメント作成", "要素ビルド", "新規タグ", "要素クリエイト", "タグ作り", "パーツ生成", "あたらしくつくる", "ゼロからつくる"], hidden: ["create", "sakusei"], desc: "JavaScriptの力で新しいHTMLの部品を0から作ります。", kidsDesc: "プログラムの力で新しいHTMLの部品を0から作ります。" },
                 { tag: "appendChild", primary: "子要素追加", kidsPrimary: "なかにいれる", synonyms: ["要素追加", "タグ追加", "末尾に追加", "アペンド", "入れ込む", "中に入れる", "内包させる", "子として追加", "ノード追加", "内側追加", "DOM追加", "要素挿入", "末尾挿入", "タグ挿入", "子に追加", "さいごについかする"], hidden: ["append", "tsuika"], desc: "作った部品を、別の箱の中の一番最後に追加します。", kidsDesc: "作った部品を、別の箱の中の一番最後に追加します。" },
                 { tag: "addEventListener('click',", primary: "クリック時", kidsPrimary: "ぽちっとおされたら", synonyms: ["クリックされた時", "押された時", "クリックイベント", "クリック監視", "タップ時", "ボタン押し時", "クリック判定", "押下時", "クリック検知", "押した瞬間", "クリックフック", "クリックトリガー", "クリック反応", "クリック受け", "タップ検知", "クリックしたとき", "おしたとき"], hidden: ["click", "kurikku"], desc: "部品がクリック（タップ）された時に動く処理を作ります。", kidsDesc: "部品がぽちっとクリック（タップ）された時に動く魔法を作ります。" },
                 { tag: "addEventListener('input',", primary: "入力時", kidsPrimary: "かきこんだとき", synonyms: ["文字打ち込み時", "インプット時", "変更中", "タイピング中", "値変更時", "監視中", "入力変化", "テキスト変更検知", "書き込み中", "リアルタイム監視", "入力フィードバック", "インプットイベント", "入力受け取り", "編集時", "データ入力中", "もじをうったとき"], hidden: ["input", "nyuuryoku"], desc: "入力枠で文字が打たれるたびに動く処理を作ります。", kidsDesc: "入力枠で文字が打たれるたびに動く魔法を作ります。" },
                 { tag: "if", primary: "もし", kidsPrimary: "もし〜だったら", synonyms: ["条件", "イフ", "場合", "もしも", "条件分岐", "判定", "条件式", "チェック", "もし合致", "if文", "条件確認", "合致すれば", "検証", "もし真なら", "真偽判定"], hidden: ["if", "moshi"], desc: "条件が合っている時だけ処理を実行させます。", kidsDesc: "条件が合っている時だけ処理を実行させます。" },
-                { tag: "else if", primary: "それ以外なら", kidsPrimary: "ちがうばあいは", synonyms: ["違う条件", "または", "エルスイフ", "次の場合", "違う場合", "その他の条件", "別の条件", "またはもし", "異なる場合", "次点", "次の判定", "次の条件式", "代わりの条件", "違ったら", "別の判定", "そうじゃなくて"], hidden: ["elseif", "soreigainara"], desc: "最初の条件から外れ、別の条件に合う時に実行させます。", kidsDesc: "最初の条件から外れ、別の条件に合う時に実行させます。" },
+                { tag: "else if", primary: "それ以外なら", kidsPrimary: "ちがうばあいは", synonyms: ["違う条件", "または", "エルスイフ", "次の場合", "違う場合", "その他の条件", "別の条件", "またはもし", "異なる場合", "次点", "次の判定", "次の条件式", "代わりの条件", "違ったら", "別の判定", "そうじゃなくて", "ちがうばあいは"], hidden: ["elseif", "soreigainara"], desc: "最初の条件から外れ、別の条件に合う時に実行させます。", kidsDesc: "最初の条件から外れ、別の条件に合う時に実行させます。" },
                 { tag: "else", primary: "それ以外", kidsPrimary: "それいがいは", synonyms: ["その他", "エルス", "どれでもない", "違った場合", "条件外", "それ以外の場合", "全て違う", "例外", "当てはまらない", "その他全て", "残りの場合", "条件不一致", "不一致", "それ以外全て", "それ以外の時", "どれでもないときは"], hidden: ["else", "soreigai"], desc: "これまでの全ての条件に当てはまらなかった時に実行させます。", kidsDesc: "これまでの全ての条件に当てはまらなかった時に実行させます。" },
                 { tag: "for", primary: "繰り返し", kidsPrimary: "ずっとくりかえす", synonyms: ["ループ", "フォア", "反復", "順繰り", "回す", "繰り返し処理", "反復処理", "連続処理", "周回", "ループ処理", "複数回", "列挙処理", "反復実行", "指定回数", "ぐるぐる", "なんかいもやる", "ぐるぐるまわす"], hidden: ["for", "kurikaeshi"], desc: "指定した回数だけ同じ処理をぐるぐると繰り返します。", kidsDesc: "指定した回数だけ同じ処理をぐるぐると繰り返します。" },
                 { tag: "while", primary: "条件ループ", kidsPrimary: "〜のあいだはくりかえす", synonyms: ["ホワイル", "条件繰り返し", "満たす間", "条件反復", "継続処理", "成立する限り", "条件周回", "条件付きループ", "条件満了まで", "継続ループ", "ループ実行", "無限ループ可", "条件付き反復", "状態継続", "ステート反復", "じょうけんがあうまで"], hidden: ["while", "jouken"], desc: "条件が合っている間はずっと処理を繰り返します。", kidsDesc: "条件が合っている間はずっと処理を繰り返します。" },
                 { tag: "function", primary: "関数定義", kidsPrimary: "まほうのじゅもん", synonyms: ["関数", "ファンクション", "機能定義", "処理のまとまり", "メソッド", "関数作成", "処理ブロック", "機能作成", "機能の宣言", "手続き", "サブルーチン", "実行ブロック", "カスタム処理", "関数宣言", "処理の塊", "まとめのなまえ", "やることリスト"], hidden: ["function", "kansuu", "fn"], desc: "複数の処理を1つの名前にまとめて、いつでも呼び出せるようにします。", kidsDesc: "複数の処理を1つの名前にまとめて、いつでも呼び出せる魔法にします。" },
                 { tag: "return", primary: "戻る", kidsPrimary: "けっかをかえす", synonyms: ["返す", "リターン", "結果を返す", "戻り値", "返り値", "出力する", "結果出力", "処理終了", "値返し", "関数抜け", "結果の返却", "リターン値", "返し", "終了して返す", "アウトプット", "おわりにする"], hidden: ["return", "modoru"], desc: "関数の中での処理を終わらせ、結果を外に渡します。", kidsDesc: "関数の中での処理を終わらせ、結果を外に渡します。" },
-                { tag: "textContent", primary: "文字変更", kidsPrimary: "もじをかきかえる", synonyms: ["テキスト変更", "文字の書き換え", "テキスト内容", "文字代入", "文字列変更", "テキスト差し替え", "中身の文字", "文字情報", "文字セット", "文字の中身", "テキスト代入", "テキスト書き換え", "文字を入れ替える", "文字の更新", "文の変更", "ちがうもじにする"], hidden: ["text", "mojihenkou"], desc: "HTML部品の中のテキスト（文字）だけを書き換えます。", kidsDesc: "HTML部品の中のテキスト（文字）だけを書き換えます。" },
+                { tag: "textContent", primary: "文字変更", kidsPrimary: "もじをかきかえる", synonyms: ["テキスト変更", "文字の書き換え", "テキスト内容", "文字代入", "文字列変更", "テキスト差し替え", "中身の文字", "文字情報", "文字セット", "文字の中身", "テキスト代入", "テキスト書き換え", "文字を入れ替える", "文字の更新", "文の変更", "ちがうもじにする"], hidden: ["text", "mojihenkou"], desc: "HTML部品の中のテキスト（文字）だけを書き換えます。", kidsDesc: "HTML部品の中の中身の文字だけを書き換えます。" },
                 { tag: "innerHTML", primary: "ＨＴＭＬ変更", kidsPrimary: "なかみをかきかえる", synonyms: ["HTML書き換え", "HTML内容", "タグ変更", "中身のHTML", "インナーHTML", "HTML代入", "タグ差し替え", "内部HTML", "HTMLセット", "要素のHTML", "構造変更", "要素書き換え", "タグの更新", "HTML構造", "内部タグ", "ぜんぶかえる"], hidden: ["html", "htmlhenkou"], desc: "HTML部品の中身を、タグごとごっそり書き換えます。", kidsDesc: "HTML部品の中身を、タグごとごっそり書き換えます。" },
                 { tag: "style.", primary: "スタイル変更", kidsPrimary: "かざりをかえる", synonyms: ["デザイン変更", "装飾変更", "見た目変更", "CSS変更", "スタイル書き換え", "デザイン適用", "動的スタイル", "装飾代入", "スタイル操作", "外観変更", "CSS適用", "スタイルをいじる", "装飾更新", "見た目操作", "CSS操作", "いろをあとからかえる"], hidden: ["style", "sutairuhenkou"], desc: "JavaScriptから直接デザイン（色やサイズ）を変更します。", kidsDesc: "プログラムの力で、あとからデザイン（色やサイズ）を変更します。" },
                 { tag: "value", primary: "値取得", kidsPrimary: "にゅうりょくされたもの", synonyms: ["入力値", "バリュー", "フォームの値", "入力内容", "値の取得", "入力データ", "中身の値", "打ち込んだ値", "記入値", "値の取り出し", "送信値", "入力情報", "データ値", "入力文字列", "フォーム内容", "かかれたもじをもらってくる"], hidden: ["value", "atai"], desc: "ユーザーが入力枠に打ち込んだ文字やデータを取得します。", kidsDesc: "ユーザーが入力枠に打ち込んだ文字やデータをもらってきます。" },
                 { tag: "classList.add", primary: "クラス追加", kidsPrimary: "あたらしいかざりをつける", synonyms: ["種類追加", "タグ付け", "クラス付与", "スタイルの適用", "状態追加", "属性追加", "クラス名追加", "ラベル追加", "デザイン追加", "クラス入れる", "グループ追加", "セレクト追加", "クラスリスト追加", "タグ追加", "マーク追加", "デザインをついかする"], hidden: ["addclass", "kurasutsuika"], desc: "部品にクラス（デザインの種類）を後から追加します。", kidsDesc: "部品にクラス（デザインの種類）を後から追加します。" },
-                { tag: "classList.remove", primary: "クラス削除", kidsPrimary: "かざりをとる", synonyms: ["種類削除", "タグ消去", "クラス除去", "スタイルの解除", "状態削除", "属性削除", "クラス名削除", "ラベル削除", "デザイン削除", "クラス抜く", "グループ削除", "セレクト削除", "クラスリスト削除", "タグ削除", "マーク削除", "デザインをけす"], hidden: ["removeclass", "kurasusakujo"], desc: "部品からクラスを剥奪してデザインを戻します。", kidsDesc: "部品からクラスを剥奪してデザインを消します。" },
-                { tag: "Math.random()", primary: "乱数", kidsPrimary: "でたらめなかず", synonyms: ["ランダム", "適当な数", "ランダム値", "おみくじ", "不規則な数", "乱数生成", "でたらめな数", "ランダム数値", "確率生成", "ガチャ", "無作為", "ランダム出力", "不定数", "サイコロ", "運任せ", "ランダムなかず", "さいころをふる"], hidden: ["random", "ransuu"], desc: "0から0.999...までのデタラメな数を作ります（ガチャ等に必須）。", kidsDesc: "0から0.999...までのデタラメな数を作ります（ガチャ等に必須）。" },
-                { tag: "Math.floor", primary: "切り捨て", kidsPrimary: "きりのいいかずにする", synonyms: ["フロア", "小数点切り捨て", "整数化", "端数切り捨て", "床関数", "切り下げ", "小数点除去", "整数にする", "切り落とし", "アンダー切り捨て", "小数点以下カット", "整数丸め", "カット", "少数カット", "丸め処理", "しょうすうてんをきる"], hidden: ["floor", "kirisute"], desc: "小数点以下を切り捨てて綺麗な整数にします。", kidsDesc: "小数点以下を切り捨ててキリのいい整数にします。" },
+                { tag: "classList.remove", primary: "クラス削除", kidsPrimary: "かざりをとる", synonyms: ["種類削除", "タグ消去", "クラス除去", "スタイルの解除", "状態削除", "属性削除", "クラス名削除", "ラベル削除", "デザイン削除", "クラス抜く", "グループ削除", "セレクト削除", "クラスリスト削除", "タグ削除", "マーク削除", "デザインをけす"], hidden: ["removeclass", "kurasusakujo"], desc: "部品からクラスを剥奪してデザインを消します。", kidsDesc: "部品からクラスを剥奪してデザインを消します。" },
+                { tag: "Math.random()", primary: "乱数", kidsPrimary: "でたらめなかず", synonyms: ["ランダム", "適当な数", "ランダム値", "おみくじ", "不規則な数", "乱数生成", "でたらめな数", "ランダム数値", "確率生成", "ガチャ", "無作為", "ランダム出力", "不定数", "サイコロ", "運任せ", "でたらめなかず", "ランダムなかず", "さいころをふる"], hidden: ["random", "ransuu"], desc: "0から0.999...までのデタラメな数を作ります（ガチャ等に必須）。", kidsDesc: "0から0.999...までのデタラメな数を作ります（ガチャ等に必須）。" },
+                { tag: "Math.floor", primary: "切り捨て", kidsPrimary: "きりのいいかずにする", synonyms: ["フロア", "小数点切り捨て", "整数化", "端数切り捨て", "床関数", "切り下げ", "小数点除去", "整数にする", "切り落とし", "アンダー切り捨て", "小数点以下カット", "整数丸め", "カット", "少数カット", "丸め処理", "しょうすうてんをきる"], hidden: ["floor", "kirisute"], desc: "小数点以下を切り捨ててキリのいい整数にします。", kidsDesc: "小数点以下を切り捨ててキリのいい整数にします。" },
                 { tag: "parseInt", primary: "整数変換", kidsPrimary: "すうじにかえる", synonyms: ["パースイント", "数値化", "数字に変換", "文字から数字", "数値変換", "整数化", "イント変換", "文字列を数字に", "数字にする", "数値抽出", "ナンバー変換", "数値へ", "数へ変換", "インテジャー変換", "文字数字変換", "けいさんできるようにする"], hidden: ["parseint", "seisuu"], desc: "文字として扱われている「100」などを、計算できる数字にします。", kidsDesc: "文字として扱われている「100」などを、計算できる数字にします。" },
                 { tag: "setTimeout", primary: "タイマー", kidsPrimary: "ちょっとまつ", synonyms: ["遅延実行", "セットタイムアウト", "時間差", "待機", "遅れて実行", "タイマー処理", "予約実行", "時間待ち", "少し待つ", "遅延処理", "タイムアウト", "時間経過後", "後で実行", "ウェイト", "待機処理", "あとでやる", "じかんがたったら"], hidden: ["timeout", "taima"], desc: "指定した時間（ミリ秒）が経過した後に、一度だけ処理を実行します。", kidsDesc: "指定した時間（ミリ秒）が経過した後に、一度だけ処理を実行します。" },
                 { tag: "setInterval", primary: "一定間隔", kidsPrimary: "なんどもやる", synonyms: ["定期実行", "セットインターバル", "繰り返しタイマー", "間隔実行", "周期処理", "定期処理", "インターバル", "ずっと繰り返す", "時間ループ", "一定時間ごと", "サイクル実行", "ルーチン", "定期イベント", "間隔処理", "無限ループ", "ずっとおなじペースでやる"], hidden: ["interval", "itteikankaku"], desc: "指定した時間ごとに、ずっと処理を繰り返し実行させます。", kidsDesc: "指定した時間ごとに、ずっと処理を繰り返し実行させます。" },
                 { tag: "clearInterval", primary: "間隔停止", kidsPrimary: "とめる", synonyms: ["タイマー解除", "定期実行停止", "インターバル停止", "ループ停止", "繰り返し停止", "タイマー終了", "定期処理中止", "インターバルクリア", "ループクリア", "時間処理終了", "周期リセット", "定期リセット", "停止コマンド", "インターバル解除", "タイマー破棄", "くりかえしをおわりにする"], hidden: ["clear", "stop"], desc: "一定間隔で繰り返しているタイマーを止めます。", kidsDesc: "一定間隔で繰り返しているタイマーを止めます。" },
+                { tag: "fetch", primary: "通信取得", kidsPrimary: "インターネットからとってくる", synonyms: ["フェッチ", "データ通信", "API通信", "情報取得", "外部取得", "ネットワーク通信", "リクエスト", "データ要求", "サーバー通信", "外部データ取得", "通信リクエスト", "非同期通信", "データフェッチ", "外部アクセス", "ネット取得", "おねがいしてとってくる"], hidden: ["fetch", "tsuushin"], desc: "インターネットを通じて、別のサーバーからデータを取得・送信します。", kidsDesc: "インターネットを通じて、別のサーバーからデータを取得・送信します。" },
+                { tag: "JSON.stringify", primary: "JSON文字列化", kidsPrimary: "データをまとめる", synonyms: ["文字化", "JSON化", "ストリンギファイ", "テキスト変換", "データ文字化", "JSON生成", "形式変換", "文字列への変換", "シリアライズ", "データ変換", "文字に変換", "JSON出力", "テキストエンコード", "文字変換処理", "文字列パック", "もじにする"], hidden: ["stringify", "mojika"], desc: "データのかたまりを、保存や通信ができる文字の形に圧縮します。", kidsDesc: "データのかたまりを、保存や通信ができる文字の形に圧縮します。" },
+                { tag: "JSON.parse", primary: "JSON解析", kidsPrimary: "よめるようにする", synonyms: ["データ復元", "オブジェクト化", "パース", "JSON読み込み", "データ変換戻し", "文字列解析", "構造化", "デシリアライズ", "テキスト解読", "実体化", "データ抽出", "JSON変換戻し", "JSON展開", "内容解釈", "読み解き", "もじからデータにする"], hidden: ["parse", "kaiseki"], desc: "文字の形になったデータを、JSで扱える元のかたまりに復元します。", kidsDesc: "文字の形になったデータを、JSで扱える元のかたまりに復元します。" },
+                { tag: "Array", primary: "配列", kidsPrimary: "いっぱいはいるはこ", synonyms: ["リストデータ", "アレイ", "データ群", "要素の集まり", "複数データ", "リスト型", "配列定義", "グループデータ", "集合体", "要素リスト", "列挙データ", "データの列", "配列オブジェクト", "データ並び", "並びデータ", "リストのはこ", "ならべていれる"], hidden: ["array", "hairetsu"], desc: "複数のデータを一列に並べて管理するリストの箱です。", kidsDesc: "複数のデータを一列に並べて管理するリストの箱です。" },
+                { tag: "push", primary: "配列追加", kidsPrimary: "リストのさいごにいれる", synonyms: ["プッシュ", "リスト追加", "データ追加", "配列に入れる", "末尾挿入", "後部追加", "要素を足す", "リストに加える", "配列拡張", "項目追加", "データプッシュ", "末尾付加", "リスト付加", "インサート", "足し込む", "あとからついかする"], hidden: ["push", "hairetsutsuika"], desc: "配列（リスト）の一番最後に、新しいデータを追加します。", kidsDesc: "配列（リスト）の一番最後に、新しいデータを追加します。" },
+                { tag: "length", primary: "長さ", kidsPrimary: "いくつあるか", synonyms: ["要素数", "レングス", "サイズ取得", "データの数", "配列の長さ", "文字数", "カウント", "量取得", "個数", "文字列長", "大きさ取得", "長さ測定", "何個あるか", "要素の数", "総数", "ながさをしらべる"], hidden: ["length", "nagasa"], desc: "配列の中にいくつデータがあるか、または文字の文字数を取得します。", kidsDesc: "配列の中にいくつデータがあるか、または文字の文字数を取得します。" },
+                { tag: "class", primary: "クラス定義", kidsPrimary: "せっけいず", synonyms: ["クラス", "設計図", "オブジェクト雛形", "型の定義", "構造定義", "クラス生成", "オブジェクト型", "雛形作成", "実体テンプレート", "設計枠", "オブジェクト基盤", "クラス枠", "定義ブロック", "設計書", "型宣言", "つくりかたのルール"], hidden: ["class", "kurasu"], desc: "オブジェクトを作るための設計図（金型）を作ります。", kidsDesc: "オブジェクトを作るための設計図（金型やルール）を作ります。" },
+                { tag: "new", primary: "新規生成", kidsPrimary: "あたらしくうみだす", synonyms: ["ニュー", "インスタンス化", "実体化", "オブジェクト生成", "新しく作る", "クラスから作成", "新生成", "新規オブジェクト", "実体作成", "ニュー生成", "プロトタイプ作成", "クローン作成", "新造", "実体ビルド", "新規インスタンス", "せっけいずからつくる"], hidden: ["new", "shinki"], desc: "クラス（設計図）から、実際に動く実体を生み出します。", kidsDesc: "クラス（設計図）から、実際に動く実体を生み出します。" },
+                { tag: "this", primary: "自分自身", kidsPrimary: "じぶんのこと", synonyms: ["ディス", "自身", "自オブジェクト", "この要素", "現在の対象", "自分", "自分を参照", "自己参照", "このインスタンス", "現在の自分", "呼び出し元", "自身の", "これ", "現在のオブジェクト", "カレント", "いまのじぶん"], hidden: ["this", "jibun"], desc: "いま現在、処理を実行しているそのオブジェクト自身を指します。", kidsDesc: "いま現在、処理を実行しているそのオブジェクト自身を指します。" },
+                { tag: "try", primary: "試す", kidsPrimary: "とりあえずやってみる", synonyms: ["トライ", "実行トライ", "例外テスト", "エラー確認", "試行処理", "実行テスト", "試しに実行", "エラー監視実行", "例外チェック", "危険な処理", "試行ブロック", "トライ処理", "例外監視", "挑戦", "実行試行", "しっぱいするかもだけどやる"], hidden: ["try", "tamesu"], desc: "エラーが起きるかもしれない危険な処理を、とりあえず試します。", kidsDesc: "エラーが起きるかもしれない危険な処理を、とりあえず試します。" },
+                { tag: "catch", primary: "例外捕捉", kidsPrimary: "エラーになったら", synonyms: ["キャッチ", "エラー対応", "失敗時", "エラーを受け取る", "例外対応", "エラーキャッチ", "失敗したら", "エラー時処理", "例外キャッチ", "問題発生時", "バグ対応", "異常時", "エラー捕捉", "フォールバック", "エラー処理", "しっぱいしたときのやくそく"], hidden: ["catch", "reigai"], desc: "tryでエラーが起きた時、システムを止めずにここで受け止めて処理します。", kidsDesc: "tryでエラーが起きた時、システムを止めずにここで受け止めて処理します。" },
                 { tag: "fetch", primary: "通信取得", kidsPrimary: "インターネットからとってくる", synonyms: ["フェッチ", "データ通信", "API通信", "情報取得", "外部取得", "ネットワーク通信", "リクエスト", "データ要求", "サーバー通信", "外部データ取得", "通信リクエスト", "非同期通信", "データフェッチ", "外部アクセス", "ネット取得", "おねがいしてとってくる"], hidden: ["fetch", "tsuushin"], desc: "インターネットを通じて、別のサーバーからデータを取得・送信します。", kidsDesc: "インターネットを通じて、別のサーバーからデータを取得・送信します。" },
                 { tag: "then", primary: "次処理", kidsPrimary: "そのあとでやる", synonyms: ["ゼン", "その後", "通信後", "取得したら", "次に行う", "成功時", "完了後", "プロミス完了", "終わったら", "次のステップ", "後続処理", "結果受け取り", "その結果", "継続処理", "結果待ち後", "おわったらつぎに"], hidden: ["then", "tsugi"], desc: "fetchなどの通信が成功した後に、続けて行う処理を書きます。", kidsDesc: "fetchなどの通信が成功した後に、続けて行う処理を書きます。" },
                 { tag: "await", primary: "待機", kidsPrimary: "おわるまでまつ", synonyms: ["アウェイト", "待つ", "処理待ち", "通信待ち", "結果を待つ", "完了待機", "非同期待ち", "プロミス待機", "終わるまで待つ", "停止して待つ", "実行待機", "同期化", "結果待機", "待機処理", "終了待ち", "ちょっとストップ"], hidden: ["await", "taiki"], desc: "通信など時間がかかる処理が終わるまで、プログラムをそこで待たせます。", kidsDesc: "通信など時間がかかる処理が終わるまで、プログラムをそこで待たせます。" },
@@ -402,18 +486,18 @@
                 { tag: "Pattern 10", primary: "和風マークアップ型", kidsPrimary: "HTMLみたいにかく", synonyms: ["HTML風", "マークアップ", "タグ", "不等号", "<", ">", "XML風", "日本語タグ", "和風タグ", "開始タグ", "終了タグ", "エレメント", "和風HTML", "カプセル化", "マークアップ言語"], hidden: ["pattern10"], desc: "HTML記号を使いつつ、中身は日本語です。", kidsDesc: "HTML記号を使いつつ、中身は日本語です。", example: "<箱 種類=\"カード\">こんにちは</箱>" },
                 { tag: "Pattern 11", primary: "読点接続型", kidsPrimary: "てん、でつなぐ", synonyms: ["ショートハンド", "読点", "、", "接続", "一行", "ワンライナー", "カンマ", "句読点", "連続", "並列", "横並び", "一気書き", "ショートカット", "簡略化", "連続記述"], hidden: ["pattern11"], desc: "読点（、）で区切って一行でサクッと書きます。", kidsDesc: "読点（、）で区切って一行でサクッと書きます。", example: "種類「カード」の枠、大見出し「こんにちは」。" },
                 { tag: "Pattern 12", primary: "ターゲット明示インサート型", kidsPrimary: "いれるばしょをかく", synonyms: ["ターゲット", "明示", "インサート", "挿入", "内部", "対象指定", "入れ込む", "場所指定", "位置指定", "ターゲット指定", "ディスティネーション", "アタッチ", "追加", "入れ子", "ピンポイント"], hidden: ["pattern12"], desc: "「〜の内部に」と操作対象を明示します。", kidsDesc: "「〜の内部に」と操作対象を明示します。", example: "箱「カード」の内部に大見出しを挿入する。" },
-                { tag: "Pattern 13", primary: "ブロック境界明示型", kidsPrimary: "はじまりとおわりをかく", synonyms: ["迷子防止", "境界", "明示", "開始", "終了", "スコープ明示", "ブロック指定", "安全", "確実", "範囲指定", "開始と終了", "エラー防止", "明確化", "区切り", "領域確定"], hidden: ["pattern13"], desc: "開始と終了を文字で書く安全な書き方。", kidsDesc: "開始と終了を文字で書く安全な書き方。", example: "カードブロックの開始。\n大見出し\nカードブロックの終了。" },
+                { tag: "Pattern 13", primary: "ブロック境界明示型", kidsPrimary: "はじまりとおわりをかく", synonyms: ["迷子防止", "境界", "明示", "開始", "終了", "スコープ明示", "ブロック指定", "安全", "確実", "範囲指定", "開始と終了", "エラー防止", "明確化", "区切り", "領域確定"], hidden: ["pattern13"], desc: "開始と終了を文字で書く安全な書き方。", kidsDesc: "開始と終了を文字で書く安全な書き方。", example: "カードブロック of の開始。\n大見出し\nカードブロックの終了。" },
                 { tag: "Pattern 14", primary: "代入・アロー（＝）型", kidsPrimary: "＝（イコール）をつかう", synonyms: ["数式風", "代入", "イコール", "＝", "アサイン", "右辺", "左辺", "変数風", "割り当て", "代入式", "等号", "設定", "バインド", "マッピング", "数式スタイル"], hidden: ["pattern14"], desc: "数学のイコールのように代入します。", kidsDesc: "数学のイコールのように代入します。", example: "コンテナ「カード」 ＝ 大見出し「こんにちは」" },
-                { tag: "Pattern 15", primary: "パイプライン・ツリー（＞）型", kidsPrimary: "＞（やじるし）をつかう", synonyms: ["深いネスト", "パイプライン", "ツリー", "＞", "大なり", "階層掘り下げ", "一気", "連鎖", "チェーン", "奥へ", "深い階層", "ネスト記号", "パス", "順次", "階層化"], hidden: ["pattern15"], desc: "1行で深い階層（ネスト）を作ります。", kidsDesc: "1行で深い階層（ネスト）を作ります。", example: "領域 ＞ 枠 ＞ 大見出し" },
-                { tag: "Pattern 16", primary: "仕様定義書・カルテ型", kidsPrimary: "【 】をつかう", synonyms: ["仕様書風", "カルテ", "定義書", "隅付き括弧", "【】", "パラメータ", "属性指定", "プロパティ", "設定一覧", "詳細設定", "仕様", "データ定義", "オブジェクト風", "設計書", "設定書き"], hidden: ["pattern16"], desc: "隅付き括弧【 】でIDやクラスを指定します。", kidsDesc: "隅付き括弧【 】でIDやクラスを指定します。", example: "【基盤：カード】中身＝大見出し" },
-                { tag: "Pattern 17", primary: "等号・アロー複合記号型", kidsPrimary: "＝＞（やじるし）をつかう", synonyms: ["データフロー", "複合記号", "アロー", "＝＞", "->", "矢印", "流れ", "フロー", "データ渡し", "接続", "リダイレクト", "送信", "方向", "ベベクトル", "出力"], hidden: ["pattern17"], desc: "データのフロー（流れ）を明示します。", kidsDesc: "データのフロー（流れ）を明示します。", example: "構成「カード」 ＝＞ 大見出し" },
-                { tag: "Pattern 18", primary: "代入・数式複合型", kidsPrimary: "＋（プラス）をつかう", synonyms: ["数式複合", "プラス", "＋", "結合", "合成", "足し算", "コンバイン", "マージ", "足し合わせ", "文字列結合", "要素結合", "複数代入", "加算", "ミックス", "プロパティ追加"], hidden: ["pattern18"], desc: "足し算（＋）でプロパティやコンテンツを結合します。", kidsDesc: "足し算（＋）でプロパティやコンテンツを結合します。", example: "空間 ＝ 種類「青」 ＋ 「こんにちは」" },
-                { tag: "Pattern 19", primary: "波括弧・等号ハイブリッド型", kidsPrimary: "＝と｛ ｝をあわせる", synonyms: ["ハイブリッド", "等号波括弧", "＝{", "宣言ブロック", "オブジェクト定義", "JSON風", "構造定義", "バインディング", "スコープ代入", "複合型", "変数ブロック", "ハイブリッド記法", "要素と中身", "関数風", "モダン型"], hidden: ["pattern19"], desc: "等号と波括弧を組み合わせます。", kidsDesc: "等号と波括弧を組み合わせます。", example: "塊 ＝ { 大見出し }" },
+                { tag: "Pattern 15", primary: "パイプライン・ツリー（＞）型", kidsPrimary: "＞（やじるし）をつかう", synonyms: ["深いネスト", "パイプライン", "ツリー", "＞", "大なり", "階層掘り下げ", "一気", "連鎖", "チェーン", "奥へ", "深い階層", "ネスト記号", "パス", "順次", "階層化"], hidden: ["pattern15"], desc: "1行で深い階層（ネスト）を作ります。", kidsDesc: "1行で深い階層（ネスト）を作ります。", example: "領域「カード」 ＞ 枠「インナー」 ＞ 大見出し「こんにちは」" },
+                { tag: "Pattern 16", primary: "仕様定義書・カルテ型", kidsPrimary: "【 】をつかう", synonyms: ["仕様書風", "カルテ", "定義書", "隅付き括弧", "【】", "パラメータ", "属性指定", "プロパティ", "設定一覧", "詳細設定", "仕様", "データ定義", "オブジェクト風", "設計書", "設定書き"], hidden: ["pattern16"], desc: "隅付き括弧【 】でIDやクラスを指定します。", kidsDesc: "隅付き括弧【 】でIDやクラスを指定します。", example: "【基盤：カード】中身＝大見出し「こんにちは」" },
+                { tag: "Pattern 17", primary: "等号・アロー複合記号型", kidsPrimary: "＝＞（やじるし）をつかう", synonyms: ["データフロー", "複合記号", "アロー", "＝＞", "->", "矢印", "流れ", "フロー", "データ渡し", "接続", "リダイレクト", "送信", "方向", "ベベクトル", "出力"], hidden: ["pattern17"], desc: "データのフロー（流れ）を明示します。", kidsDesc: "データのフロー（流れ）を明示します。", example: "構成「カード」 ＝＞ 大見出し「こんにちは」" },
+                { tag: "Pattern 18", primary: "代入・数式複合型", kidsPrimary: "＋（プラス）をつかう", synonyms: ["数式複合", "プラス", "＋", "結合", "合成", "足し算", "コンバイン", "マージ", "足し合わせ", "文字列結合", "要素結合", "複数代入", "加算", "ミックス", "プロパティ追加"], hidden: ["pattern18"], desc: "足し算（＋）でプロパティやコンテンツを結合します。", kidsDesc: "足し算（＋）でプロパティやコンテンツを結合します。", example: "空間「カード」 ＝ 種類「青」 ＋ 「こんにちは」" },
+                { tag: "Pattern 19", primary: "波括弧・等号ハイブリッド型", kidsPrimary: "＝と｛ ｝をあわせる", synonyms: ["ハイブリッド", "等号波括弧", "＝{", "宣言ブロック", "オブジェクト定義", "JSON風", "構造定義", "バインディング", "スコープ代入", "複合型", "変数ブロック", "ハイブリッド記法", "要素と中身", "関数風", "モダン型"], hidden: ["pattern19"], desc: "等号と波括弧を組み合わせます。", kidsDesc: "等号と波括弧を組み合わせます。", example: "塊「カード」 ＝ { 大見出し「こんにちは」 }" },
                 { tag: "Pattern 20", primary: "スラッシュ・パス階層型", kidsPrimary: "／（スラッシュ）をつかう", synonyms: ["パス風", "スラッシュ", "/", "ディレクトリ", "階層パス", "ファイルパス", "ツリー構造", "パス記法", "深いネスト", "パス指定", "ロケーション", "アドレス風", "フォルダ風", "階層区切り", "階層パス"], hidden: ["pattern20"], desc: "ディレクトリパスのように書きます。", kidsDesc: "ディレクトリパスのように書きます。", example: "セル / 枠 / 大見出し" },
                 { tag: "Pattern 21", primary: "動詞掛け合わせ連鎖型", kidsPrimary: "〜して、とつなぐ", synonyms: ["手続きの直列化", "連鎖", "動詞", "して", "し", "順次実行", "チェイン", "連続動作", "アクション連鎖", "時系列", "順番", "ステップ", "連続指示", "直列", "流れるように"], hidden: ["pattern21"], desc: "手続きを直列化して連続して書きます。", kidsDesc: "手続きを直列化して連続して書きます。", example: "作成して、配置し、表示する。" },
                 { tag: "Pattern 22", primary: "多重動詞条件分岐・修飾型", kidsPrimary: "〜しつつ、とつなぐ", synonyms: ["プロパティの並列化", "並列", "しつつ", "ながら", "同時", "複数指定", "同時適用", "並行", "パラレル", "一括設定", "装飾複数", "まとめ設定", "同時に", "並列処理", "複数修飾"], hidden: ["pattern22"], desc: "プロパティを並列に同時設定します。", kidsDesc: "プロパティを並列に同時設定します。", example: "白にしつつ、丸めながら、設定する。" },
                 { tag: "Pattern 23", primary: "角括弧属性バインド型", kidsPrimary: "［ ］をつかう", synonyms: ["データバインディング", "角括弧", "[]", "属性バインド", "ブラケット", "インライン属性", "直接指定", "プロパティバインド", "タグ内指定", "要素属性", "属性付き", "角カッコ", "ダイレクト指定", "値バインド", "引数風"], hidden: ["pattern23"], desc: "属性を角括弧でバインドします。", kidsDesc: "属性を角括弧でバインドします。", example: "枠[種類＝カード]「こんにちは」" },
-                { tag: "Pattern 24", primary: "記号・動詞完全融合型", kidsPrimary: "ぜんぶあわせる", synonyms: ["複合ハイブリッド", "完全融合", "記号動詞", "究極系", "ハイブリッド", "ミックス", "記号と文章", "融合", "総決算", "フル活用", "全部入り", "柔軟", "高機能", "自由記述", "最強パターン"], hidden: ["pattern24"], desc: "記号と動詞をハイブリッドした究極の記法。", kidsDesc: "記号と動詞をハイブリッドした究極の記法。", example: "基盤 ＝＞ 大見出しを作成し、設定する。" }
+                { tag: "Pattern 24", primary: "記号・動詞完全融合型", kidsPrimary: "ぜんぶあわせる", synonyms: ["複合ハイブリッド", "完全融合", "記号動詞", "究極系", "ハイブリッド", "ミックス", "記号と文章", "融合", "総決算", "フル活用", "全部入り", "柔軟", "高機能", "自由記述", "最強パターン"], hidden: ["pattern24"], desc: "記号と動詞をハイブリッドした究極の記法。", kidsDesc: "記号と動詞をハイブリッドした究極の記法。", example: "基盤「カード」 ＝＞ 「こんにちは」の大見出しを作成し、種類を「ヘッダー」に設定する。" }
             ]
         };
 
@@ -423,7 +507,7 @@
 
         for (const type in WashinDictionaryData) {
             WashinDictionaryData[type].forEach(item => {
-                // h1やpなどの英語タグ自体を自動補完キー（隠しコマンド）に追加し、英語入力でも反応するようにする
+                // h1やpなどの英語タグ自体を自動補完キーに追加し、英語入力でも反応するようにする
                 if (item.tag && !item.hidden.includes(item.tag) && !item.tag.includes('!')) {
                     item.hidden.push(item.tag);
                 }
@@ -477,6 +561,25 @@
             document.getElementById('editor-title').innerText = isKidsMode ? "ソースコードを書くところ (自動補完: oomi+Enter)" : "和心ソースコード (自動補完: oomi+Enter)";
             document.getElementById('preview-title').innerText = isKidsMode ? "プレビュー (結果がみえるところ)" : "実行プレビュー (Live View)";
             
+            // Firebase UIのキッズ化
+            document.getElementById('lbl-pub-title').innerText = isKidsMode ? "さくひんの なまえ（ひっす）" : "作品のなまえ（ひっす）";
+            document.getElementById('lbl-pub-desc').innerText = isKidsMode ? "さくひんの せつめい" : "作品のせつめい";
+            document.getElementById('publish-title').placeholder = isKidsMode ? "例：おもしろいゲーム" : "例：おもしろいゲーム";
+            document.getElementById('publish-desc').placeholder = isKidsMode ? "例：ボタンをおすと色が変わるよ！" : "例：ボタンをおすと色が変わるよ！";
+            document.getElementById('execute-publish-btn').innerText = isKidsMode ? "🌟 みんなにこうかいする！" : "🌟 世界に公開する！";
+            
+            document.getElementById('pub-main-title').innerText = isKidsMode ? "🚀 さくひんをこうかいする（セーブ）" : "🚀 作品を公開する（セーブ）";
+            document.getElementById('lbl-pub-success-desc').innerText = isKidsMode ? "きみの作品の「固有ID」はこれだよ。このIDをお友だちに教えてあげてね！" : "きみの作品の「固有ID」はこれだよ。このIDをお友だちに教えてあげてね！";
+            
+            document.getElementById('gallery-main-title').innerText = isKidsMode ? "🌐 みんなのさくひんひろば" : "みんなの作品ひろば";
+            document.getElementById('gallery-sub-title').innerText = isKidsMode ? "世界中のおともだちがつくった和心ゲームであそぼう！" : "世界中のみんながつくった和心プログラムをロードしてあそぼう！";
+            document.getElementById('search-id-input').placeholder = isKidsMode ? "ろくもじのID、または作品のおなまえをいれてね..." : "固有ID（6文字）、または作品の名前を入力してね...";
+            document.getElementById('execute-search-btn').innerText = isKidsMode ? "さがす 🔍" : "さがす 🔍";
+            document.getElementById('load-code-btn').innerText = isKidsMode ? "📥 この作品をエディタにひらく" : "📥 この作品をエディタにひらく";
+            document.getElementById('lbl-mini-preview').innerText = isKidsMode ? "🎮 ライブプレビュー (うごかせるよ)" : "🎮 ライブプレビュー (うごかせるよ)";
+            document.getElementById('close-search-btn').innerText = isKidsMode ? "もどる ✖" : "エディタにもどる ✖";
+            document.getElementById('gallery-list-label').innerText = isKidsMode ? "みんながつくった さくひんいちらん" : "公開されているすべての作品";
+
             // エディタの内容がデフォルトコードの場合、モードに合わせて差し替える
             const currentVal = editor.value.trim();
             if (currentVal === defaultCodeNormal.trim() || currentVal === defaultCodeKids.trim()) {
@@ -564,16 +667,16 @@
             
             if (res.type === 'syntax') {
                 div.innerHTML = `
-                    <div class="syntax-tag">[${isKidsMode ? 'かきかた' : '文法'}] ${res.tag}</div>
+                    <div class="syntax-tag">[文法] ${res.tag}</div>
                     <div class="result-primary">${primaryText}</div>
-                    <div class="result-synonyms">${isKidsMode ? 'とくちょう' : '特徴'}: ${res.synonyms.slice(0, 5).join(', ')}...</div>
+                    <div class="result-synonyms">${isKidsMode ? 'とくちょう' : '特徴'}: ${res.synonyms.join(', ')}...</div>
                     <div class="result-desc">${descText}</div>
                 `;
             } else {
                 div.innerHTML = `
                     <div class="result-tag">[${res.type.toUpperCase()}] &lt;${res.tag}&gt;</div>
                     <div class="result-primary">${primaryText}</div>
-                    <div class="result-synonyms">${isKidsMode ? 'ほかのいいかた' : '類語'}: ${res.synonyms.slice(0, 5).join(', ')}...</div>
+                    <div class="result-synonyms">${isKidsMode ? 'ほかのいいかた' : '類語'}: ${res.synonyms.join(', ')}...</div>
                     <div class="result-synonyms" style="color:#666; margin-top:4px;">${isKidsMode ? 'キーワード' : '補完キー'}: ${res.hidden.join(', ')}</div>
                 `;
             }
@@ -652,17 +755,16 @@
         class WashinParserV9 {
             constructor() { this.stack = []; }
             findMatch(dict, text) {
-                // 英語のタグ名 (h1, p, divなど) が行の先頭にある場合、それを最優先で拾う（誤爆を防ぎつつ英語に反応する）
+                // 英語のタグ名 (h1, p, divなど) が行の先頭にある場合、それを最優先で拾う
                 const engMatch = text.match(/^[a-zA-Z0-9\-]+/);
                 if (engMatch && Object.values(dict).includes(engMatch[0].toLowerCase())) {
                     return engMatch[0].toLowerCase();
                 }
 
-                // 日本語でのマッチ（長い単語から順に検索）
+                // 日本語でのマッチ
                 const keys = Object.keys(dict).sort((a, b) => b.length - a.length);
                 for (const jp of keys) { if (text.includes(jp)) return dict[jp]; }
                 
-                // フォールバック（未知の英字タグ等）
                 return engMatch ? engMatch[0].toLowerCase() : null;
             }
             parse(source) {
@@ -673,7 +775,7 @@
                     const indent = line.match(/^([　\s]*)/)[1].replace(/　/g, '  ').replace(/\t/g, '  ').length / 2;
                     let content = line.trim();
 
-                    // HTML直書きのパススルー（<h1>や<p>などをHTMLのまま書いた場合もそのまま反応させる）
+                    // HTML直書きのパススルー
                     if (mode === 'html' && content.startsWith('<') && content.endsWith('>')) {
                         output += `${'  '.repeat(indent)}${content}\n`;
                         continue;
@@ -722,7 +824,7 @@
                     } else if (mode === 'js') {
                         let jsL = content;
                         Object.keys(wordToTag.js).sort((a,b)=>b.length-a.length).forEach(k => {
-                            if (jsL.includes(k)) jsL = jsL.split(k).join(wordToTag.js[k] + (wordToTag.js[k].match(/[a-zA-Z]$/) ? ' ' : ''));
+                            if (jsL.includes(k)) jsL = jsL.split(k).join(window.wordToTag.js[k] ? window.wordToTag.js[k] + (window.wordToTag.js[k].match(/[a-zA-Z]$/) ? ' ' : '') : k);
                         });
                         jsL = jsL.replace(/（/g, '(').replace(/）/g, ')').replace(/「|『/g, '"').replace(/」|』/g, '"').replace(/[：:]/g, ' = ');
                         output += `${base}${jsL};\n`;
@@ -747,8 +849,8 @@
             const compiled = parser.parse(editor.value);
             previewFrame.srcdoc = compiled;
             statusIndicator.classList.remove('typing');
-            statusIndicator.style.backgroundColor = '#89d185';
-            statusIndicator.nextSibling.textContent = isKidsMode ? '同期完了' : '同期完了';
+            statusIndicator.style.backgroundColor = '#3fb950';
+            statusIndicator.nextSibling.textContent = isKidsMode ? 'どうき完了' : '同期完了';
         }
 
         fullscreenPreviewBtn.addEventListener('click', () => {
@@ -764,7 +866,7 @@
         });
 
         // ----------------------------------------------------
-        // ▼ ここから Firebase Realtime Database 連携の追加実装 ▼
+        // ▼ ここから Firebase Realtime Database 連携の実装 ▼
         // ----------------------------------------------------
         const publishBtn = document.getElementById('publish-btn');
         const publishModal = document.getElementById('publish-modal');
@@ -790,8 +892,10 @@
         const searchResultDesc = document.getElementById('search-result-desc');
         const searchPreviewFrame = document.getElementById('search-preview-frame');
         const loadCodeBtn = document.getElementById('load-code-btn');
+        const galleryProjectsList = document.getElementById('gallery-projects-list');
 
         let loadedCodeBuffer = "";
+        let allProjectsCache = {}; // 読み込んだ全プロジェクトのキャッシュ
 
         // モーダルの開閉制御
         publishBtn.addEventListener('click', () => {
@@ -802,16 +906,22 @@
         });
         closePublishBtn.addEventListener('click', () => publishModal.style.display = 'none');
 
-        searchBtn.addEventListener('click', () => {
+        // 作品をさがす（全画面ギャラリー）の起動
+        searchBtn.addEventListener('click', async () => {
             searchModal.style.display = 'block';
             searchResultArea.style.display = 'none';
             searchError.style.display = 'none';
             searchIdInput.value = '';
+            await fetchAllProjects(); // 全件を自動でロードして表示！
         });
         closeSearchBtn.addEventListener('click', () => searchModal.style.display = 'none');
 
-        publishModal.addEventListener('click', (e) => { if (e.target === publishModal) publishModal.style.display = 'none'; });
-        searchModal.addEventListener('click', (e) => { if (e.target === searchModal) searchModal.style.display = 'none'; });
+        publishModal.addEventListener('click', (e) => {
+            if (e.target === publishModal) publishModal.style.display = 'none';
+        });
+        searchModal.addEventListener('click', (e) => {
+            if (e.target === searchModal) searchModal.style.display = 'none';
+        });
 
         // ランダムID生成器 (a-z, 0-9の6文字)
         function generateProjectId() {
@@ -821,6 +931,16 @@
                 id += chars.charAt(Math.floor(Math.random() * chars.length));
             }
             return id;
+        }
+
+        // HTMLのエスケープ処理（セキュリティ対策）
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // Firebase への保存（公開）処理
@@ -841,8 +961,6 @@
             try {
                 const projectId = generateProjectId();
                 
-                // 動的インポートを利用してグローバルに展開されたモジュールのメソッドを呼び出す想定
-                // 実際にはFirebase SDKが正しくセットアップされている必要があります
                 if (typeof window.__firebase_set !== 'undefined') {
                      await window.__firebase_set(window.__firebase_ref(window.__firebase_db, 'projects/' + projectId), {
                         title: title,
@@ -851,7 +969,7 @@
                         createdAt: Date.now()
                     });
                 } else {
-                     throw new Error("データベースの準備ができていないみたい。");
+                     throw new Error(isKidsMode ? "データベースの準備ができていないみたい。" : "Firebase Databaseの接続準備ができていません。");
                 }
 
                 publishLoader.style.display = 'none';
@@ -877,42 +995,106 @@
             publishError.style.display = 'block';
         }
 
-        // Firebase からの読み込み（探す）処理
-        executeSearchBtn.addEventListener('click', async () => {
-            const projectId = searchIdInput.value.trim();
-            if (!projectId) {
-                showSearchError(isKidsMode ? "IDを入力してね！" : "IDを入力してください。");
-                return;
-            }
-
+        // ギャラリー：すべての作品データを取得して一覧レンダリング
+        async function fetchAllProjects() {
             searchLoader.style.display = 'block';
             searchError.style.display = 'none';
             searchResultArea.style.display = 'none';
+            galleryProjectsList.innerHTML = '';
 
             try {
-                 if (typeof window.__firebase_get !== 'undefined') {
-                    const snapshot = await window.__firebase_get(window.__firebase_child(window.__firebase_ref(window.__firebase_db), `projects/${projectId}`));
-                    if (!snapshot.exists()) {
-                        throw new Error(isKidsMode ? "みつからなかったよ。IDがまちがっていないかたしかめてね！" : "見つかりませんでした。IDを確認してください。");
+                if (typeof window.__firebase_get !== 'undefined') {
+                    const snapshot = await window.__firebase_get(window.__firebase_ref(window.__firebase_db, 'projects'));
+                    if (snapshot.exists()) {
+                        allProjectsCache = snapshot.val();
+                        renderProjectCards(allProjectsCache);
+                        
+                        // 最初のアイテムをデフォルトプレビュー
+                        const firstId = Object.keys(allProjectsCache)[0];
+                        if (firstId) {
+                            showPreview(allProjectsCache[firstId]);
+                            // 最初のアクティブカードを設定
+                            const firstCard = document.getElementById(`card-${firstId}`);
+                            if(firstCard) firstCard.classList.add('active');
+                        }
+                    } else {
+                        galleryProjectsList.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#8b949e; padding:40px;">${isKidsMode ? "公開されている作品がまだありません。" : "公開されている共有作品はありません。最初の作品を投稿しましょう！"}</div>`;
                     }
-                    
-                    const data = snapshot.val();
-                    searchResultTitle.innerText = data.title || (isKidsMode ? "名無しの作品" : "無題の作品");
-                    searchResultDesc.innerText = data.desc || (isKidsMode ? "説明はないみたい。" : "説明はありません。");
-                    loadedCodeBuffer = data.code || "";
-
-                    const compiled = parser.parse(loadedCodeBuffer);
-                    searchPreviewFrame.srcdoc = compiled;
-
                     searchLoader.style.display = 'none';
-                    searchResultArea.style.display = 'block';
-                 } else {
-                     throw new Error("データベースの準備ができていないみたい。");
-                 }
+                    searchResultArea.style.display = 'grid';
+                } else {
+                    throw new Error("データベースが準備できていません。");
+                }
             } catch (err) {
                 searchLoader.style.display = 'none';
                 showSearchError(err.message);
             }
+        }
+
+        // ギャラリー：カード一覧を動的ビルド
+        function renderProjectCards(projectsObj, filterQuery = "") {
+            galleryProjectsList.innerHTML = '';
+            const query = filterQuery.toLowerCase().trim();
+            let count = 0;
+
+            // 新しい順（createdAtの降順）にソート
+            const sortedProjects = Object.entries(projectsObj)
+                .map(([id, data]) => ({ id, ...data }))
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            sortedProjects.forEach(proj => {
+                // 検索フィルタ判定（ID完全・部分一致、またはタイトル部分一致）
+                const matchId = proj.id.toLowerCase().includes(query);
+                const matchTitle = (proj.title || "").toLowerCase().includes(query);
+                
+                if (query && !matchId && !matchTitle) {
+                    return; 
+                }
+
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                card.id = `card-${proj.id}`;
+                card.innerHTML = `
+                    <div>
+                        <h4>${escapeHtml(proj.title)}</h4>
+                        <p>${escapeHtml(proj.desc || '')}</p>
+                    </div>
+                    <div class="project-card-footer">
+                        <span class="project-id-badge">ID: ${proj.id}</span>
+                        <span>${new Date(proj.createdAt || Date.now()).toLocaleDateString()}</span>
+                    </div>
+                `;
+                
+                card.addEventListener('click', () => {
+                    // アクティブカードのスタイル切替
+                    document.querySelectorAll('.project-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    showPreview(proj);
+                });
+
+                galleryProjectsList.appendChild(card);
+                count++;
+            });
+
+            if(count === 0) {
+                galleryProjectsList.innerHTML = `<div style="grid-column: 1/-1; text-align:center; color:#8b949e; padding:30px;">${isKidsMode ? "さがしている作品はみつからなかったよ。" : "該当する作品が見つかりませんでした。"}</div>`;
+            }
+        }
+
+        // プレビューペインに作品情報をロードする処理
+        function showPreview(proj) {
+            searchResultTitle.innerText = proj.title || (isKidsMode ? "ななしのゲーム" : "無題の作品");
+            searchResultDesc.innerText = proj.desc || "";
+            loadedCodeBuffer = proj.code || "";
+
+            const compiled = parser.parse(loadedCodeBuffer);
+            searchPreviewFrame.srcdoc = compiled;
+        }
+
+        // 作品名またはIDによる手動検索ボタン
+        executeSearchBtn.addEventListener('click', () => {
+            const query = searchIdInput.value.trim().toLowerCase();
+            renderProjectCards(allProjectsCache, query);
         });
 
         function showSearchError(msg) {
@@ -920,13 +1102,9 @@
             searchError.style.display = 'block';
         }
 
-        loadCodeBtn.addEventListener('click', () => {
-            editor.value = loadedCodeBuffer;
-            compile();
-            searchModal.style.display = 'none';
-            statusIndicator.nextSibling.textContent = isKidsMode ? 'よみこみ完了' : '読込完了';
-            statusIndicator.style.backgroundColor = '#89d185';
-        });
+        // ----------------------------------------------------
+        // ▲ ここまで Firebase Realtime Database 連携の実装 ▲
+        // ----------------------------------------------------
 
         // キーボード・入力制御
         editor.addEventListener('keydown', function(e) {
@@ -939,10 +1117,8 @@
                 const match = before.match(/[a-zA-Z0-9\-]+$/);
                 if (match && autoCompleteMap[match[0].toLowerCase()]) {
                     e.preventDefault();
-                    // モードに応じて補完する日本語を切り替える
                     let word = autoCompleteMap[match[0].toLowerCase()];
                     if (isKidsMode) {
-                        // 低学年モードの場合は専用のやさしい言葉に変換
                         const foundItem = WashinDictionaryData.html.concat(WashinDictionaryData.css, WashinDictionaryData.js)
                             .find(item => item.primary === word);
                         if (foundItem && foundItem.kidsPrimary) {
@@ -965,37 +1141,11 @@
         });
 
         window.onload = () => {
+            // グローバルに辞書データを一部バインドしてパーサーの安定性を向上
+            window.wordToTag = wordToTag;
             editor.value = defaultCodeNormal;
             compile();
         };
-    </script>
-    
-    <!-- ===== スクリプト (モジュールとしてFirebaseをインポート) ===== -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
-
-        // 提供されたFirebase設定
-        const firebaseConfig = {
-            apiKey: "AIzaSyA0b_D4rD1NZWuGIEgaergbmiG_3GQURVo",
-            authDomain: "kyaraatume.firebaseapp.com",
-            databaseURL: "https://kyaraatume-default-rtdb.firebaseio.com",
-            projectId: "kyaraatume",
-            storageBucket: "kyaraatume.firebasestorage.app",
-            messagingSenderId: "1048580348866",
-            appId: "1:1048580348866:web:73dbdd422ca5bc1836945b"
-        };
-
-        // Firebaseの初期化
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        
-        // 通常のスクリプトから呼び出せるようにグローバル変数（window）に登録
-        window.__firebase_db = database;
-        window.__firebase_ref = ref;
-        window.__firebase_set = set;
-        window.__firebase_get = get;
-        window.__firebase_child = child;
     </script>
 </body>
 </html>
